@@ -58,19 +58,19 @@ void Controller::threadMain_() {
         }
 
         // update hid
-        hidScanInput();
-        m_keysDown = hidKeysDown(CONTROLLER_P1_AUTO);
-        m_keysHeld = hidKeysHeld(CONTROLLER_P1_AUTO);
+        padConfigureInput(1, HidNpadStyleSet_NpadStandard);
+        padInitializeDefault(&pad);
+        padUpdate(&pad);
+        m_keysDown = padGetButtonsDown(&pad);
+        m_keysHeld = padIsHandheld(&pad);
 
         // update screen toggle
         if (keyComboIsJustPressedImpl_(mp_curScreen->getActionKeyMap().toggleOverlay)) {
             m_screenIsOn = !m_screenIsOn;
             if (m_screenIsOn) {
                 m_shouldRerender = true;
-                mp_curScreen->onToggleShow();
             } else {
                 Overlay::flushEmptyFb();  // Turn off screen
-                mp_curScreen->onToggleHide();
             }
         }
 
