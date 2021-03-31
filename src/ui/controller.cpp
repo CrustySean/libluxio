@@ -49,6 +49,10 @@ void Controller::threadMain_() {
     // DEBUG_ASSERT(mp_curScreen);  // TODO: implement an assert
     mountScreen_(mp_curScreen, nullptr);
 
+    PadState pad;
+    padConfigureInput(1, HidNpadStyleSet_NpadStandard);
+    padInitializeDefault(&pad);
+
     // main loop
     while (true) {
         // check if exit is requested
@@ -58,11 +62,10 @@ void Controller::threadMain_() {
         }
 
         // update hid
-        padConfigureInput(1, HidNpadStyleSet_NpadStandard);
-        padInitializeDefault(&pad);
         padUpdate(&pad);
+        
         m_keysDown = padGetButtonsDown(&pad);
-        m_keysHeld = padIsHandheld(&pad);
+        m_keysHeld = padGetButtons(&pad);
 
         // update screen toggle
         if (keyComboIsJustPressedImpl_(mp_curScreen->getActionKeyMap().toggleOverlay)) {

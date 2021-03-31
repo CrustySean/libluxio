@@ -8,8 +8,6 @@
 
 extern "C" u64 __nx_vi_layer_id;
 
-PadState pad;
-
 namespace lx {
 
 Overlay::Overlay() : m_doRender(true), mp_curLvKeyMap(&DEFAULT_LV_KEY_MAP_INSTANCE) {
@@ -17,8 +15,6 @@ Overlay::Overlay() : m_doRender(true), mp_curLvKeyMap(&DEFAULT_LV_KEY_MAP_INSTAN
 
     TRY_GOTO(apmInitialize(), end);
     TRY_GOTO(viInitialize(ViServiceType_Manager), end);
-
-    hidInitializeTouchScreen(); // init touch
 
     TRY_GOTO(viOpenDefaultDisplay(&m_viDisplay), end);
     TRY_GOTO(viGetDisplayVsyncEvent(&m_viDisplay, &m_viDisplayVsyncEvent), close_display);
@@ -40,6 +36,7 @@ Overlay::Overlay() : m_doRender(true), mp_curLvKeyMap(&DEFAULT_LV_KEY_MAP_INSTAN
     LOGML("framebuffer initialized... ");
 
     lv_init();
+    hidInitializeTouchScreen(); // init touch
 
     lv_disp_drv_init(&m_dispDrv);
     lv_disp_buf_init(&m_dispBufferInfo, mp_renderBuf, nullptr, LAYER_BUFFER_SIZE);
@@ -141,9 +138,15 @@ void Overlay::flushEmptyFb() {
 bool Overlay::touchRead_(lv_indev_drv_t* indev_driver, lv_indev_data_t* data) {
 	
 	HidTouchScreenState s_state;
-    if (&s_state.count > 0) {
+    s_state.count = 0;
+
+    if (s_state.count > 0) {
         data->state = LV_INDEV_STATE_PR;
+
         HidTouchState t_state;
+        t_state.x = 0;
+        t_state.y = 0;
+
         hidGetTouchScreenStates(&s_state, 0);
         auto curLayerInfo = getInstance().getCurLayerInfo_();
         if (Overlay::getIsDockedStatus()) {
@@ -162,7 +165,12 @@ bool Overlay::touchRead_(lv_indev_drv_t* indev_driver, lv_indev_data_t* data) {
 bool Overlay::keysRead_(lv_indev_drv_t* indev_driver, lv_indev_data_t* data) {
     data->state = LV_INDEV_STATE_REL;
 
-    auto keysDown = padIsHandheld(&pad);
+    // init hid stuff
+    PadState pad;
+    padConfigureInput(1, HidNpadStyleSet_NpadStandard);
+    padInitializeDefault(&pad);
+    
+    auto keysDown = padGetButtonsDown(&pad);
     if (keysDown) {
         auto& lvKeyMap = *getInstance().mp_curLvKeyMap;
 
