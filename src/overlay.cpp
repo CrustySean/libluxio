@@ -136,25 +136,21 @@ void Overlay::flushEmptyFb() {
 }
 
 bool Overlay::touchRead_(lv_indev_drv_t* indev_driver, lv_indev_data_t* data) {
-	
-	HidTouchScreenState s_state;
-    s_state.count = 0;
 
-    if (s_state.count > 0) {
+    if (hidTouchCount() > 0) {
         data->state = LV_INDEV_STATE_PR;
 
-        HidTouchState t_state;
-        t_state.x = 0;
-        t_state.y = 0;
+        touchPosition touch;
+        hidTouchRead(&touch, 0);
 
         hidGetTouchScreenStates(&s_state, 0);
         auto curLayerInfo = getInstance().getCurLayerInfo_();
         if (Overlay::getIsDockedStatus()) {
-            data->point.x = t_state.x * DOCK_HANDHELD_PIXEL_RATIO - curLayerInfo.POS_X;
-            data->point.y = t_state.y * DOCK_HANDHELD_PIXEL_RATIO - curLayerInfo.POS_Y;
+            data->point.x = touch.px * DOCK_HANDHELD_PIXEL_RATIO - curLayerInfo.POS_X;
+            data->point.y = touch.py * DOCK_HANDHELD_PIXEL_RATIO - curLayerInfo.POS_Y;
         } else {
-            data->point.x = t_state.x - curLayerInfo.POS_X * DOCK_HANDHELD_PIXEL_RATIO;
-            data->point.y = t_state.y - curLayerInfo.POS_Y * DOCK_HANDHELD_PIXEL_RATIO;
+            data->point.x = touch.px - curLayerInfo.POS_X * DOCK_HANDHELD_PIXEL_RATIO;
+            data->point.y = touch.py - curLayerInfo.POS_Y * DOCK_HANDHELD_PIXEL_RATIO;
         }
     } else {
         data->state = LV_INDEV_STATE_REL;
