@@ -136,22 +136,25 @@ void Overlay::flushEmptyFb() {
 }
 
 bool Overlay::touchRead_(lv_indev_drv_t* indev_driver, lv_indev_data_t* data) {
+    
+    HidTouchScreenState state={0};
+    
+    if (hidGetTouchScreenStates(&state, 1)) {
+        if (state.count > 0) {
+            data->state = LV_INDEV_STATE_PR;
 
-    if (hidTouchCount() > 0) {
-        data->state = LV_INDEV_STATE_PR;
+            touchPosition touch;
+            hidTouchRead(&touch, 0);
 
-        touchPosition touch;
-        hidTouchRead(&touch, 0);
-
-        hidGetTouchScreenStates(&s_state, 0);
-        auto curLayerInfo = getInstance().getCurLayerInfo_();
-        if (Overlay::getIsDockedStatus()) {
-            data->point.x = touch.px * DOCK_HANDHELD_PIXEL_RATIO - curLayerInfo.POS_X;
-            data->point.y = touch.py * DOCK_HANDHELD_PIXEL_RATIO - curLayerInfo.POS_Y;
-        } else {
-            data->point.x = touch.px - curLayerInfo.POS_X * DOCK_HANDHELD_PIXEL_RATIO;
-            data->point.y = touch.py - curLayerInfo.POS_Y * DOCK_HANDHELD_PIXEL_RATIO;
+            auto curLayerInfo = getInstance().getCurLayerInfo_();
         }
+            if (Overlay::getIsDockedStatus()) {
+                data->point.x = state.touches[0].x * DOCK_HANDHELD_PIXEL_RATIO - curLayerInfo.POS_X;
+                data->point.y = state.touches[0].y * DOCK_HANDHELD_PIXEL_RATIO - curLayerInfo.POS_Y;
+            } else {
+                data->point.x = state.touches[0].x - curLayerInfo.POS_X * DOCK_HANDHELD_PIXEL_RATIO;
+                data->point.y = state.touches[0].y - curLayerInfo.POS_Y * DOCK_HANDHELD_PIXEL_RATIO;
+            }
     } else {
         data->state = LV_INDEV_STATE_REL;
     }
